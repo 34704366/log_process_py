@@ -2,15 +2,19 @@ import xlwt
 from datetime import datetime, timedelta
 
 
-def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, date_end_sign):
+def process_log(date_index, time_index, file_name, date_sign, start_sign, end_sign, opreate_sign, name, date_end_sign):
     fo = open(file_name, 'r')
 
     # 存放要操作的日期
     date = []
 
     # 利用datetime.strptime函数将时间字符串格式化
-    datetime_start = datetime.strptime(date_sign, "%m/%d/%Y")
-    datetime_end = datetime.strptime(date_end_sign, "%m/%d/%Y")
+
+    # ！注意log文件中年月日的顺序
+    # datetime_start = datetime.strptime(date_sign, "%m/%d/%Y")
+    # datetime_end = datetime.strptime(date_end_sign, "%m/%d/%Y")
+    datetime_start = datetime.strptime(date_sign, "%d/%m/%Y")
+    datetime_end = datetime.strptime(date_end_sign, "%d/%m/%Y")
 
     # 将起始日期和结束日期中间的日期全部加入到date数组中
     for i in range((datetime_end - datetime_start).days + 1):
@@ -18,8 +22,9 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
         day = str(int(day.split("-")[1])) + '/' + str(int(day.split("-")[2])) + '/' + str(int(day.split("-")[0]))
         date.append(day)
 
-    # 从打开的文件中读取一行
+    # 从打开的文件中读取多行
     array = fo.readlines()
+
     start = []   # start数组用来存储所有匹配到的开始点
     end = []     # end数组用来存储所有匹配到的结束点
 
@@ -28,7 +33,6 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
     for line in range(len(array)):
         # 如果读到的行的字符串中包含有指定的日期
         if any(day in array[line] for day in date):
-            # count += 1
             # 找到开始点
             if array[line].find(start_sign) >= 0:
                 print('开始点', array[line], '--', line)
@@ -55,7 +59,6 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
 
     for i in range(len(end)):
         for j in range(len(reverse_start)):
-            # print(reverse_start[j])
             # 定位到指定位置
             if reverse_start[j] > end[i]:
                 continue
@@ -80,9 +83,9 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
 
     for i in range(len(result)):
         # 指定sheetname
-        sheet_name = 'sheet' + str(num)
-        sheet_name = str(array[result[i][0]]).split(" ")[1].replace(':', '：') + '~' + \
-                     str(array[result[i][1]]).split(" ")[1].replace(':', '：')
+        # sheet_name = 'sheet' + str(num)
+        sheet_name = str(array[result[i][0]]).split(" ")[time_index].replace(':', '：') + '~' + \
+                     str(array[result[i][1]]).split(" ")[time_index].replace(':', '：')
 
         # 创建一个worksheet
         worksheet = workbook.add_sheet(sheet_name)
@@ -94,18 +97,24 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
         # 起始时间
         start_flag = 1
 
-        time_start = array[result[i][0]].split(" ")[0] + ' ' + array[result[i][0]].split(" ")[1]
+        # 根据起始点，取得对应格式的起始时间
+        time_start = array[result[i][0]].split(" ")[date_index] + ' ' + array[result[i][0]].split(" ")[time_index]
         time_start = datetime.strptime(time_start, "%m/%d/%Y %H:%M:%S")
+
+        # 将对应的起始点和结束点之间的所有时间点都写入到表格中
         for j in range(len(opreate_list)):
             if opreate_list[j] > result[i][0] and opreate_list[j] < result[i][1]:
-                time = array[opreate_list[j]].split(" ")[0] + ' ' + array[opreate_list[j]].split(" ")[1]
+                # 将时间转换为需要的格式
+                time = array[opreate_list[j]].split(" ")[date_index] + ' ' + array[opreate_list[j]].split(" ")[time_index]
                 time = datetime.strptime(time, "%m/%d/%Y %H:%M:%S")
-                # 间隔分钟
+                # 计算出间隔的分钟
                 interval = (time - time_start).total_seconds() / 60
-                worksheet.write(index, 0, array[opreate_list[j]].split(" ")[1])
+                # 将对应的时间写入第一列
+                worksheet.write(index, 0, array[opreate_list[j]].split(" ")[time_index])
+                # 将对应的与起始点的间隔时间（分钟）写入第二列
                 worksheet.write(index, 1, interval)
                 index += 1
-            # print(array[opreate_list[index]].split(" ")[1])
+
 
     # 保存
     workbook.save(name)
@@ -113,12 +122,16 @@ def process_log(file_name, date_sign, start_sign, end_sign, opreate_sign, name, 
 
 
 if __name__ == '__main__':
+    # 日期在每行中的索引值
+    date_index = 0
+    # 时间在每行中的索引值
+    time_index = 2
     # 要处理的日志的文件名
-    file_name = './cyc_comp.log'
+    file_name = './new.log'
     # 要搜索的日期
-    date_sign = "1/17/2022"
+    date_sign = "3/8/2022"
     # 结束的日期
-    date_end_sign = "1/19/2022"
+    date_end_sign = "3/9/2022"
     # 开始的标志
     start_sign = '103700,13100,100000'
     # 结束的标志
@@ -127,5 +140,5 @@ if __name__ == '__main__':
     opreate_sign = 'MOVE_REL'
     # 保存的文件名字
     name = 'move_time.xls'
-    process_log(file_name=file_name, date_sign=date_sign, date_end_sign=date_end_sign, start_sign=start_sign,
+    process_log(date_index=date_index, time_index=time_index, file_name=file_name, date_sign=date_sign, date_end_sign=date_end_sign, start_sign=start_sign,
                 end_sign=end_sign, opreate_sign=opreate_sign, name=name)
