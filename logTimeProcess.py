@@ -19,7 +19,7 @@ def process_log(date_index, time_index, file_name, date_sign, start_sign, end_si
     # 将起始日期和结束日期中间的日期全部加入到date数组中
     for i in range((datetime_end - datetime_start).days + 1):
         day = str(datetime_start + timedelta(days=i)).split(" ")[0]
-        day = str(int(day.split("-")[1])) + '/' + str(int(day.split("-")[2])) + '/' + str(int(day.split("-")[0]))
+        day = str(int(day.split("-")[2])) + '/' + str(int(day.split("-")[1])) + '/' + str(int(day.split("-")[0]))
         date.append(day)
 
     # 从打开的文件中读取多行
@@ -127,11 +127,11 @@ if __name__ == '__main__':
     # 时间在每行中的索引值
     time_index = 2
     # 要处理的日志的文件名
-    file_name = './new.log'
+    file_name = 'new.log'
     # 要搜索的日期
-    date_sign = "3/8/2022"
+    date_sign = "8/3/2022"
     # 结束的日期
-    date_end_sign = "3/9/2022"
+    date_end_sign = "9/3/2022"
     # 开始的标志
     start_sign = '103700,13100,100000'
     # 结束的标志
